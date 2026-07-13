@@ -336,6 +336,15 @@ textarea:focus,.finp:focus{outline:none;border-color:var(--teal);box-shadow:0 0 
     KPIs Mensuels
     <input type="file" accept=".xlsx,.xls" onchange="importKPI(this)">
   </label>
+  <button class="import-btn" id="btnFileSave" onclick="toggleFileSave()" title="Sauvegarde automatique de votre saisie dans un fichier .json — à activer par chaque utilisateur qui renseigne sa partie, puis à transmettre à l'admin">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+    <span id="fileSaveLbl">Sauvegarde fichier</span>
+  </button>
+  <label class="import-btn" id="btnLoadSaisie" onclick="return pwGate(event)" title="Charger la saisie d'un utilisateur (.json) et la fusionner dans la semaine — les champs renseignés du fichier complètent ou remplacent les vôtres (admin)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    Charger saisie
+    <input type="file" accept=".json,application/json" onchange="loadSaisie(this)">
+  </label>
   <div class="tb-r">
     <span class="saved-lbl" id="savedLbl">✓ Sauvegardé</span>
     <button class="import-btn" id="btnLock" onclick="pwLock()" style="display:none;border-color:rgba(242,193,78,.55);color:#F2C14E" title="Enregistre les données et verrouille à nouveau les imports et la génération PPT (mot de passe requis)">
@@ -1089,7 +1098,7 @@ function hPurge(){
 function save(){
   if(saveT) clearTimeout(saveT);
   saveT=setTimeout(()=>{
-    hSave(); renderHist();
+    hSave(); renderHist(); fileSaveTick();
     const el=document.getElementById('savedLbl');
     el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);
   },700);
@@ -3064,6 +3073,113 @@ function pwGate(e){
   if(p!==null)alert('Mot de passe incorrect.');
   return false;
 }
+/* ══ SAUVEGARDE AUTO VERS FICHIER (saisie utilisateur) ═══════════
+   L'utilisateur active une fois : chaque sauvegarde écrit aussi sa saisie
+   dans le fichier .json choisi (API File System Access — Edge/Chrome).
+   À défaut, un export .json classique est téléchargé à la demande. */
+let _fsHandle=null, _fsT=null;
+function saisiePayload(){
+  return JSON.stringify({_type:'dop_saisie',_v:1,savedAt:new Date().toISOString(),
+    sem:D.sem,ann:D.ann,clients:D.clients,mc:D.mc,q:D.q,qos:D.qos,aban:D.aban,slaSnap:SLA},null,1);
+}
+function fileSaveUI(on){
+  const b=document.getElementById('btnFileSave'),l=document.getElementById('fileSaveLbl');
+  if(!b||!l)return;
+  if(on){b.classList.add('ok');l.textContent='Sauvegarde auto : ON';}
+  else{b.classList.remove('ok');l.textContent='Sauvegarde fichier';}
+}
+async function toggleFileSave(){
+  if(_fsHandle){_fsHandle=null;fileSaveUI(false);return;}
+  if(window.showSaveFilePicker){
+    try{
+      _fsHandle=await window.showSaveFilePicker({
+        suggestedName:`Saisie_DOP-ABEA_S${D.sem}_${D.ann}.json`,
+        types:[{description:'Saisie DOP-ABEA',accept:{'application/json':['.json']}}]
+      });
+      await writeFileSave();
+      fileSaveUI(true);
+    }catch(e){/* annulé */}
+  }else{
+    /* Navigateur sans File System Access : export ponctuel */
+    exportSaisie();
+    alert("Votre navigateur ne permet pas la sauvegarde automatique vers un fichier.\nUn export de votre saisie vient d'être téléchargé — recliquez ce bouton pour ré-exporter après vos modifications, puis transmettez le fichier à l'administrateur.");
+  }
+}
+async function writeFileSave(){
+  if(!_fsHandle) return;
+  try{
+    const w=await _fsHandle.createWritable();
+    await w.write(saisiePayload());
+    await w.close();
+  }catch(e){_fsHandle=null;fileSaveUI(false);}
+}
+function fileSaveTick(){
+  if(!_fsHandle) return;
+  clearTimeout(_fsT);
+  _fsT=setTimeout(writeFileSave,1200);
+}
+function exportSaisie(){
+  const blob=new Blob([saisiePayload()],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`Saisie_DOP-ABEA_S${D.sem}_${D.ann}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+/* Fusion d'une saisie : les champs renseignés du fichier complètent/écrasent les nôtres */
+function mergeWeekData(f){
+  let n=0;
+  if(f.clients)Object.entries(f.clients).forEach(([id,fc])=>{
+    if(!fc)return;
+    const c=D.clients[id]||(D.clients[id]={meteo:'vert',fm:'',ri:'',kpis:[]});
+    if(fc.fm&&String(fc.fm).trim()){c.fm=fc.fm;n++;}
+    if(fc.ri&&String(fc.ri).trim()){c.ri=fc.ri;n++;}
+    if(fc.override){c.override=true;c.meteo=fc.meteo;n++;}
+    if(Array.isArray(fc.kpis)){
+      if(!c.kpis)c.kpis=[];
+      fc.kpis.forEach((k,i)=>{
+        if(k&&k.v&&k.v!=='%'&&k.v!=='-'&&k.v!=='N/A'){
+          if(c.kpis[i]){c.kpis[i].v=k.v;if(k.o)c.kpis[i].o=k.o;if(k.k)c.kpis[i].k=k.k;}
+          else c.kpis[i]={...k};
+          n++;
+        }
+      });
+    }
+  });
+  if(Array.isArray(f.mc))f.mc.forEach(fr=>{
+    const m=(D.mc||[]).find(x=>x&&x.c===fr.c);
+    if(m&&fr.val&&fr.val!=='%'&&fr.val!=='-'){m.val=fr.val;n++;}
+  });
+  if(f.q){
+    ['max','min','moy','rem'].forEach(k=>{if(f.q[k]){D.q[k]=f.q[k];n++;}});
+    if(Array.isArray(f.q.rows)&&f.q.rows.length&&!(D.q.rows||[]).length){D.q.rows=f.q.rows;n++;}
+  }
+  if(f.qos)['s11','s12','img'].forEach(k=>{if(f.qos[k]){D.qos[k]=f.qos[k];n++;}});
+  if(Array.isArray(f.aban)&&f.aban.length&&!(D.aban||[]).length){D.aban=f.aban;n++;}
+  if(Array.isArray(f.slaSnap)&&f.slaSnap.length&&!SLA.length){SLA=f.slaSnap;n++;}
+  return n;
+}
+function loadSaisie(inp){
+  const file=inp.files&&inp.files[0];
+  inp.value='';
+  if(!file) return;
+  const fr=new FileReader();
+  fr.onload=e=>{
+    try{
+      const f=JSON.parse(e.target.result);
+      if(!f||f._type!=='dop_saisie'){alert('Fichier non reconnu : attendu une saisie exportée par cet outil (.json).');return;}
+      if(f.sem&&f.ann&&(f.sem!==D.sem||f.ann!==D.ann)){
+        if(!confirm(`Le fichier concerne la semaine S${f.sem} ${f.ann} (semaine affichée : S${D.sem} ${D.ann}).\nBasculer sur S${f.sem} ${f.ann} avant la fusion ?`)) return;
+        adminGotoWeek(parseInt(f.sem),parseInt(f.ann));
+      }
+      const n=mergeWeekData(f);
+      recalc();save();refresh();
+      alert(n?`Saisie fusionnée : ${n} champ(s) repris du fichier.`:'Aucun champ renseigné trouvé dans le fichier.');
+    }catch(err){alert('Erreur de lecture du fichier : '+err.message);}
+  };
+  fr.readAsText(file);
+}
+
 function pwLock(){
   /* Enregistre les données de la semaine puis remet le verrou sur imports & PPT */
   try{hSave();}catch(_){}

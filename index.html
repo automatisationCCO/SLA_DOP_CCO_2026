@@ -302,12 +302,14 @@ textarea:focus,.finp:focus{outline:none;border-color:var(--teal);box-shadow:0 0 
   <div class="tb-divider"></div>
   <span class="tb-lbl">Sem.</span>
   <button class="tb-arr" onclick="navSem(-1)" title="Semaine précédente">‹</button>
-  <input class="tb-inp" id="iSem" onchange="D.sem=this.value;save();refresh()">
+  <input class="tb-inp" id="iSem" onchange="if(pwGate()){D.sem=this.value;save();refresh();}else{this.value=D.sem;}">
   <button class="tb-arr" onclick="navSem(+1)" title="Semaine suivante">›</button>
   <span class="tb-lbl">Année</span>
-  <button class="tb-arr" onclick="D.ann=String(parseInt(D.ann||2026)-1);refresh()" title="Année précédente">‹</button>
-  <input class="tb-inp" id="iAnn" onchange="D.ann=this.value;save();refresh()">
-  <button class="tb-arr" onclick="D.ann=String(parseInt(D.ann||2026)+1);refresh()" title="Année suivante">›</button>
+  <button class="tb-arr" onclick="if(pwGate()){D.ann=String(parseInt(D.ann||2026)-1);save();refresh();}" title="Année précédente">‹</button>
+  <input class="tb-inp" id="iAnn" onchange="if(pwGate()){D.ann=this.value;save();refresh();}else{this.value=D.ann;}">
+  <button class="tb-arr" onclick="if(pwGate()){D.ann=String(parseInt(D.ann||2026)+1);save();refresh();}" title="Année suivante">›</button>
+  <button class="tb-arr" onclick="adminAddWeek()" title="Créer / ouvrir une semaine précise (admin)" style="color:#F2C14E;font-weight:800">＋</button>
+  <button class="tb-arr" onclick="adminDelWeek()" title="Supprimer définitivement la semaine affichée (admin)" style="color:#f87171">🗑</button>
   <div class="tb-divider"></div>
   <label class="import-btn" id="btnTaux" onclick="return pwGate(event)">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
@@ -732,15 +734,19 @@ function nextW(){
   return{sem:s+1,ann:a};
 }
 function navSem(delta){
-  // Sauvegarder la semaine courante
-  hSave();
   let s=parseInt(D.sem)||1, a=parseInt(D.ann)||new Date().getFullYear();
   s+=delta;
   if(s<1){s=52;a--;}else if(s>53){s=1;a++;}
-  D.sem=String(s).padStart(2,'0');
-  D.ann=String(a);
-  // Charger les données de la nouvelle semaine (ou repartir de zéro)
-  const key=hKey(D.sem,D.ann);
+  const nsem=String(s).padStart(2,'0'), nann=String(a);
+  /* La création d'une semaine encore vierge est réservée à l'admin */
+  const key=hKey(nsem,nann);
+  let exists=false;
+  try{exists=!!_storage.getItem(key);}catch(_){}
+  if(!exists&&!pwGate()) return;
+  // Sauvegarder la semaine courante puis basculer
+  hSave();
+  D.sem=nsem;
+  D.ann=nann;
   const loaded=hLoad(key);
   if(!loaded){
     // Nouvelle semaine vierge : réinitialiser clients mais garder sem/ann
@@ -1103,6 +1109,62 @@ function onHistLoad(){
   if(!v) return;
   hSave();
   if(hLoad(v)){initClients();refresh();}
+}
+
+/* ══ ADMIN SEMAINES : création ciblée / suppression ══ */
+function adminGotoWeek(sem,ann,skipSave){
+  if(!skipSave) hSave();
+  D.sem=String(sem).padStart(2,'0');
+  D.ann=String(ann);
+  const key=hKey(D.sem,D.ann);
+  const loaded=hLoad(key);
+  if(!loaded){
+    const s2=D.sem, a2=D.ann;
+    D.clients={};D.mc=[];D.q={max:'',min:'',moy:'',rem:'',rows:[]};D.qos={s11:'',s12:'',img:''};D.aban=[];
+    D.sem=s2;D.ann=a2;
+  }
+  initClients();
+  if(typeof migrateKpis==='function') migrateKpis();
+  recalc();
+  document.getElementById('iSem').value=D.sem;
+  document.getElementById('iAnn').value=D.ann;
+  save();refresh();
+}
+function adminAddWeek(){
+  if(!pwGate()) return;
+  const ns=prompt('Numéro de semaine à créer / ouvrir (1 à 53) :', String((parseInt(D.sem)||0)+1));
+  if(ns===null) return;
+  const s=parseInt(ns);
+  if(isNaN(s)||s<1||s>53){alert('Numéro de semaine invalide (1 à 53).');return;}
+  const na=prompt('Année :', D.ann);
+  if(na===null) return;
+  const a=parseInt(na);
+  if(isNaN(a)||a<2020||a>2100){alert('Année invalide.');return;}
+  adminGotoWeek(s,a);
+}
+function adminDelWeek(){
+  if(!pwGate()) return;
+  const cur_k=hKey(D.sem,D.ann);
+  if(!confirm('Supprimer définitivement la semaine S'+D.sem+' '+D.ann+' et toutes ses données ?')) return;
+  try{_storage.removeItem(cur_k);}catch(_){}
+  /* Basculer vers la semaine existante la plus récente, sinon repartir vierge */
+  const weeks=hKeys()
+    .map(k=>k.match(/^dop_v5_S(\d+)_(\d+)$/))
+    .filter(Boolean)
+    .filter(m=>hKey(m[1],m[2])!==cur_k);
+  if(weeks.length){
+    const m=weeks[0];
+    D.clients={};
+    adminGotoWeek(parseInt(m[1]),parseInt(m[2]),true);
+    alert('Semaine supprimée. Bascule sur S'+String(m[1]).padStart(2,'0')+' '+m[2]+'.');
+    return;
+  }
+  /* Plus aucune semaine : réinitialiser la semaine courante à vierge */
+  D.clients={};D.mc=[];D.q={max:'',min:'',moy:'',rem:'',rows:[]};D.qos={s11:'',s12:'',img:''};D.aban=[];
+  initClients();
+  if(typeof migrateKpis==='function') migrateKpis();
+  recalc();save();refresh();
+  alert('Semaine supprimée. La semaine affichée repart vierge.');
 }
 
 function newWeek(){
@@ -2757,6 +2819,52 @@ function resetLogoForExisting(id){
 }
 
 /* ══ GESTION CLIENTS — FORMULAIRE ════════════════════════════════ */
+function startEditClient(id){window._editCli=id;renderForm();
+  setTimeout(()=>{const e=document.getElementById('editCliCard');if(e)e.scrollIntoView({behavior:'smooth',block:'center'});},50);}
+function cancelEditClient(){window._editCli=null;renderForm();}
+function saveEditClient(){
+  const id=window._editCli;if(!id)return;
+  const s=SL.find(x=>x.id===id);if(!s)return;
+  const g=x=>document.getElementById('edc_'+x);
+  const lbl=String(g('lbl').value||'').trim().slice(0,40);
+  if(!lbl){alert('Le nom est requis.');return;}
+  s.lbl=lbl;
+  s.ico=String(g('ico').value||s.ico||'🏢').slice(0,4);
+  s.num=String(g('num').value||s.num||'').slice(0,3);
+  s.defM=['vert','orange','rouge'].includes(g('defm').value)?g('defm').value:s.defM;
+  s.slaKeys=String(g('keys').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+  saveSL();
+  window._editCli=null;
+  recalc();save();refresh();
+}
+function editClientCardHtml(){
+  const id=window._editCli;
+  if(!id) return '';
+  const s=SL.find(x=>x.id===id);
+  if(!s){window._editCli=null;return '';}
+  return `<div class="card" id="editCliCard" style="border:1.5px solid #3D5661">
+    <div class="card-h"><span class="card-t">✏️ Modifier le client — ${esc(s.lbl)} <span style="font-family:monospace;font-size:10px;color:var(--tx3)">(${esc(s.id)})</span></span></div>
+    <div style="padding:4px 12px 12px">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px">
+        <div><span class="flbl">Nom affiché</span><input id="edc_lbl" value="${esc(s.lbl)}" maxlength="40"></div>
+        <div><span class="flbl">Icône (si pas de logo)</span><input id="edc_ico" value="${esc(s.ico||'')}" maxlength="4"></div>
+        <div><span class="flbl">N° de slide</span><input id="edc_num" value="${esc(s.num||'')}" maxlength="3"></div>
+        <div><span class="flbl">Météo par défaut</span>
+          <select id="edc_defm">
+            <option value="vert" ${s.defM==='vert'?'selected':''}>Vert</option>
+            <option value="orange" ${s.defM==='orange'?'selected':''}>Orange</option>
+            <option value="rouge" ${s.defM==='rouge'?'selected':''}>Rouge</option>
+          </select></div>
+      </div>
+      <div style="margin-top:8px"><span class="flbl">Clés SLA / FA Qlik (séparées par des virgules — pilotent les imports et la météo)</span>
+        <input id="edc_keys" value="${esc((s.slaKeys||[]).join(', '))}" placeholder="ex. ORTEC, ORTEC_HNO"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+        <button class="mb" style="background:#e2e8f0;color:#334155;border:none;padding:6px 14px;font-size:11px;font-weight:600" onclick="cancelEditClient()">Annuler</button>
+        <button class="mb" style="background:#3D5661;color:#fff;border:none;padding:6px 14px;font-size:11px;font-weight:700" onclick="saveEditClient()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>`;
+}
 function renderGestionForm(){
   const csuClients=SL.filter(s=>s.grp==='csu');
   const rows=csuClients.map(s=>{
@@ -2770,6 +2878,7 @@ function renderGestionForm(){
       <td style="padding:6px 8px;text-align:center">${isDef?'<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:#e0e7ef;color:#3D5661;font-weight:700">DÉFAUT</span>':'<span style="font-size:9px;padding:2px 6px;border-radius:3px;background:#fef3c7;color:#92400e;font-weight:700">CUSTOM</span>'}</td>
       <td style="padding:6px 8px;text-align:right">
         <div style="display:flex;gap:4px;justify-content:flex-end">
+          <button class="mb" style="background:#3D5661;color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:600" onclick="startEditClient(\''+s.id+'\')" title="Modifier ce client (nom, clés SLA, icône, météo, n° de slide)">✏️ Modifier</button>
           <button class="mb" style="background:#3E9FB9;color:#fff;border:none;padding:4px 10px;font-size:11px;font-weight:600" onclick="uploadLogoForExisting(\''+s.id+'\')" title="Téléverser un logo personnalisé (PNG/JPG/SVG, max 200 Ko)">🖼️ Logo</button>
           ${isMulti?'<span style="font-size:9px;color:var(--tx3);font-style:italic;padding:4px 6px">verrouillé</span>':'<button class="mb" style="background:#fee2e2;color:#991b1b;border:none;padding:4px 10px;font-size:11px;font-weight:700" onclick="if(deleteClient(\''+s.id+'\'))refresh()">🗑️</button>'}
         </div>
@@ -2801,6 +2910,7 @@ function renderGestionForm(){
         </table>
       </div>
     </div>
+    ${editClientCardHtml()}
 
     <div class="card">
       <div class="card-h"><span class="card-t">➕ Ajouter un nouveau client</span></div>
@@ -2896,7 +3006,11 @@ function refresh(){
   document.getElementById('iSem').value=D.sem;
   document.getElementById('iAnn').value=D.ann;
 }
-function go(id){cur=id;save();refresh();}
+const PW_SECTIONS=['som','gestion','genesys','qlik'];
+function go(id){
+  if(PW_SECTIONS.includes(id)&&!pwGate()) return;
+  cur=id;save();refresh();
+}
 function setM(id,val){
   const cs=D.clients[id];if(!cs) return;
   if(val===null){cs.override=false;cs.meteo=cs.meteoAuto||SL.find(s=>s.id===id)?.defM||'vert';}
@@ -3323,33 +3437,54 @@ async function makePPT(){
       footer(sl);
     });
 
-    /* ══ SLIDE : Qualité ══ */
+    /* ══ SLIDE : Qualité — chiffres Max/Moy/Min + tableau des scores (fidèle à l'aperçu) ══ */
     safeSlide(()=>{
       const sl=pptx.addSlide();
       const q=D.q||{}, csq=D.clients['qualite']||{};
       const rows=q.rows||[];
-      const moyV=q.moy?parseFloat(String(q.moy).replace(',','.').replace('%','').trim()):NaN;
+      const hasMoy=q.moy&&q.moy!=='';
+      const moyV=hasMoy?parseFloat(String(q.moy).replace(',','.').replace('%','').trim()):NaN;
       const mQ=qualiteMeteo(isNaN(moyV)?null:moyV/100)||'vert';
       header(sl,'qualite','Qualité',mQ);
-      sl.addText('Indicateurs Clés — Qualité',{x:0.30,y:0.86,w:4.58,h:0.26,fontSize:10.5,bold:true,color:NV,fontFace:F,margin:0});
-      const gCol=mQ==='vert'?GRN:mQ==='orange'?ORG:RED;
-      kpiCard(sl,0.30,1.16,2.21,1.76,{k:'Écoute Qualité — Moy.',o:'≥ 90 %',v:isNaN(moyV)?'':q.moy,ok:isNaN(moyV)?null:moyV>=90});
-      kpiCard(sl,2.66,1.16,2.21,1.76,{k:'Évaluations téléphoniques',o:'-',v:rows.length?String(rows.reduce((a,r)=>a+(parseInt(r.count)||0),0)):'',ok:null});
+      sl.addText('Indicateurs Clés — Qualité · Double écoute',{x:0.30,y:0.86,w:4.58,h:0.26,fontSize:10.5,bold:true,color:NV,fontFace:F,margin:0});
+
+      /* ── 3 chiffres : Max / Moyenne / Min ── */
+      const stats=[
+        {lbl:'⬆ Meilleur score', v:q.max||'—', c:OKG,  bg:'EFF7F1'},
+        {lbl:'Moyenne S'+D.sem,  v:q.moy||'—', c:NV,   bg:'EAF0F8', big:true},
+        {lbl:'⬇ Score le plus bas', v:q.min||'—', c:RED, bg:'FBEFEF'},
+      ];
+      const scW=1.45, scH=0.82, scGap=0.11;
+      stats.forEach((s2,k)=>{
+        const x=0.30+k*(scW+scGap);
+        sl.addShape('roundRect',{x,y:1.16,w:scW,h:scH,rectRadius:0.04,fill:{color:'FFFFFF'},line:{color:BRD,width:0.75},shadow:shd()});
+        sl.addShape('rect',{x,y:1.16,w:scW,h:0.045,fill:{color:s2.c},line:{color:s2.c,width:0}});
+        sl.addText(s2.lbl,{x:x+0.05,y:1.25,w:scW-0.10,h:0.18,fontSize:6.5,color:GRY,align:'center',valign:'middle',fontFace:F,margin:0});
+        sl.addText(String(s2.v),{x:x+0.05,y:1.44,w:scW-0.10,h:0.42,fontSize:s2.big?14:12,bold:true,color:s2.c,align:'center',valign:'middle',fontFace:F,margin:0});
+      });
+
+      /* ── Tableau des scores par client (Score / Éval. / Météo) ── */
       if(rows.length){
-        const tH={fill:NV,bold:true,color:'FFFFFF',fontSize:6.5,align:'center',valign:'middle',fontFace:F};
-        const tr=[[{text:'Client FA',options:{...tH,align:'left'}},{text:'Score',options:tH},{text:'Éval.',options:tH}]];
-        rows.slice(0,9).forEach((r,i)=>{
-          const mq2=qualiteMeteo(r.score);
-          const c=mq2==='vert'?OKG:mq2==='orange'?ORG:RED;
-          const bg=i%2===0?'FFFFFF':'F2F4F7';
+        const tH={fill:NV,bold:true,color:'FFFFFF',fontSize:6.8,align:'center',valign:'middle',fontFace:F};
+        const tr=[[{text:'Client FA',options:{...tH,align:'left'}},{text:'Score',options:tH},{text:'Éval.',options:tH},{text:'Météo',options:tH}]];
+        rows.slice(0,11).forEach((r,ri)=>{
+          const m2=qualiteMeteo(r.score);
+          const c=m2==='vert'?OKG:m2==='orange'?ORG:RED;
+          const bg=ri%2===0?'FFFFFF':'F5F8FC';
           tr.push([
-            {text:r.fa,options:{fill:bg,color:NV2,fontSize:6.5,align:'left',valign:'middle',fontFace:F}},
-            {text:p2(r.score),options:{fill:bg,bold:true,color:c,fontSize:6.5,align:'center',valign:'middle',fontFace:F}},
-            {text:String(r.count),options:{fill:bg,color:GRY,fontSize:6.5,align:'center',valign:'middle',fontFace:F}}]);
+            {text:r.fa,options:{fill:bg,color:'333333',fontSize:6.8,align:'left',valign:'middle',fontFace:F}},
+            {text:p2(r.score),options:{fill:bg,bold:true,color:c,fontSize:7,align:'center',valign:'middle',fontFace:F}},
+            {text:String(r.count),options:{fill:bg,color:GRY,fontSize:6.8,align:'center',valign:'middle',fontFace:F}},
+            {text:'●',options:{fill:bg,bold:true,color:c,fontSize:8,align:'center',valign:'middle',fontFace:F}}]);
         });
-        const rH=Math.min(0.22,1.95/tr.length);
-        sl.addShape('roundRect',{x:0.28,y:3.04,w:4.61,h:rH*tr.length+0.04,rectRadius:0.02,fill:{color:'FFFFFF'},line:{color:BRD,width:0.5},shadow:shd()});
-        try{sl.addTable(tr,{x:0.30,y:3.06,w:4.57,h:rH*tr.length,colW:[2.47,1.10,1.00],border:{pt:0.3,color:'D9DEE4'}});}catch(e){}
+        const tY=2.14;
+        const rH=Math.min(0.235,(5.02-tY)/tr.length);
+        sl.addShape('roundRect',{x:0.28,y:tY-0.02,w:4.61,h:rH*tr.length+0.04,rectRadius:0.02,fill:{color:'FFFFFF'},line:{color:BRD,width:0.5},shadow:shd()});
+        try{sl.addTable(tr,{x:0.30,y:tY,w:4.57,h:rH*tr.length,colW:[2.17,1.00,0.70,0.70],border:{pt:0.3,color:'D9DEE4'}});}catch(e){}
+        if(rows.length>11) sl.addText('+ '+(rows.length-11)+' client(s) non affiché(s)',{x:0.30,y:5.02,w:4.57,h:0.14,fontSize:5.8,italic:true,color:'9AA3AF',align:'right',fontFace:F,margin:0});
+      } else {
+        sl.addShape('roundRect',{x:0.30,y:2.14,w:4.57,h:2.60,rectRadius:0.04,fill:{color:'FFFFFF'},line:{color:BRD,width:0.75},shadow:shd()});
+        sl.addText('Aucune donnée — importer le fichier QoS de la semaine S'+D.sem,{x:0.44,y:2.90,w:4.29,h:0.60,fontSize:8.5,italic:true,color:'9AA3AF',align:'center',fontFace:F,margin:0});
       }
       alertsFM(sl,[csq.ri,q.rem].filter(Boolean).join('\n'),csq.fm);
       footer(sl);

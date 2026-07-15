@@ -3101,7 +3101,7 @@ function collectShared(){
   }catch(e){}
   return {_type:'dop_shared',_v:1,_ts:new Date().toISOString(),store};
 }
-function applyShared(emb){
+function applyShared(emb,live){
   if(!emb||emb._type!=='dop_shared'||!emb.store) return 0;
   let n=0;
   const weekNewer=(loc,rem)=>{
@@ -3115,10 +3115,26 @@ function applyShared(emb){
     const locCfg=_storage.getItem(CFG_TS_KEY)||'';
     const remCfg=emb.store[CFG_TS_KEY]||'';
     const cfgNewer=remCfg>locCfg;
+    const curK=hKey(D.sem,D.ann);
     Object.entries(emb.store).forEach(([k,v])=>{
       if(v==null)return;
       if(/^dop_v5_S\d+_\d+$/.test(k)){
-        if(weekNewer(_storage.getItem(k),v)){_storage.setItem(k,v);n++;}
+        if(live&&k===curK){
+          /* Semaine affichée : fusion champ à champ dans les deux sens —
+             version distante plus récente : ses champs renseignés priment ;
+             plus ancienne : elle complète seulement les champs vides.
+             Les saisies simultanées de plusieurs managers se combinent. */
+          try{
+            const locRaw=_storage.getItem(k);
+            let locTs='';try{locTs=locRaw?(JSON.parse(locRaw)._savedAt||''):'';}catch(e2){}
+            const rem=JSON.parse(v);
+            const remTs=rem._savedAt||'';
+            if(remTs!==locTs){
+              const taken=(typeof mergeWeekData==='function')?mergeWeekData(rem,!(remTs>locTs)):0;
+              if(taken){recalc();hSave();n++;}
+            }
+          }catch(e){}
+        }else if(weekNewer(_storage.getItem(k),v)){_storage.setItem(k,v);n++;}
       }else if(k===PROJ_KEY||k===SL_KEY||k===LOGOS_KEY){
         if(cfgNewer||!_storage.getItem(k)){_storage.setItem(k,v);n++;}
       }else if(k===CFG_TS_KEY){
@@ -3153,7 +3169,7 @@ async function _shReadMerge(){
     const txt=await f.text();
     const m=txt.match(/<script type="application\/json" id="dopSharedData">([\s\S]*?)<\/script>/);
     if(!m)return 0;
-    return applyShared(JSON.parse(m[1]));
+    return applyShared(JSON.parse(m[1]),true);
   }catch(e){return 0;}
 }
 async function _shWrite(){
@@ -3163,7 +3179,7 @@ async function _shWrite(){
     const f=await _shHandle.getFile();
     let txt=await f.text();
     const m=txt.match(/<script type="application\/json" id="dopSharedData">([\s\S]*?)<\/script>/);
-    if(m){try{applyShared(JSON.parse(m[1]));}catch(e){}}
+    if(m){try{applyShared(JSON.parse(m[1]),true);}catch(e){}}
     const payload=JSON.stringify(collectShared()).replace(/<\//g,'<\\/');
     txt=txt.replace(/(<script type="application\/json" id="dopSharedData">)[\s\S]*?(<\/script>)/,
       (a,p1,p2)=>p1+payload+p2);
@@ -3231,8 +3247,25 @@ window.addEventListener('focus',async()=>{
   if(now-_shFocusT<4000)return;
   _shFocusT=now;
   const n=await _shReadMerge();
-  if(n){_shRefreshFromStorage();sharedUI(true,'mis à jour');}
+  if(n){_shRefreshFromStorage();sharedUI(true,'mis à jour');sharedTick();}
 });
+/* Relecture périodique : les changements des autres apparaissent pendant la session */
+let _lastInput=0;
+window.addEventListener('input',()=>{_lastInput=Date.now();},true);
+async function _shPoll(){
+  if(!_shHandle)return;
+  /* Ne pas rafraîchir sous les doigts de l'utilisateur */
+  if(Date.now()-_lastInput<8000)return;
+  const ae=document.activeElement;
+  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA')&&ae.value)return;
+  const n=await _shReadMerge();
+  if(n){
+    _shRefreshFromStorage();
+    sharedUI(true,'mis à jour '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
+    sharedTick(); /* repousse la version combinée : le fichier converge vers l'union des saisies */
+  }
+}
+setInterval(_shPoll,25000);
 
 /* ══ SAUVEGARDE AUTO VERS FICHIER (saisie utilisateur) ═══════════
    L'utilisateur active une fois : chaque sauvegarde écrit aussi sa saisie
@@ -3288,34 +3321,38 @@ function exportSaisie(){
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 }
 /* Fusion d'une saisie : les champs renseignés du fichier complètent/écrasent les nôtres */
-function mergeWeekData(f){
+function mergeWeekData(f,additive){
+  /* additive=true : ne remplit que les champs locaux vides (complément) ;
+     additive=false : les champs renseignés du fichier priment (version plus récente) */
   let n=0;
+  const empty=v=>!v||!String(v).trim()||v==='%'||v==='-'||v==='N/A';
   if(f.clients)Object.entries(f.clients).forEach(([id,fc])=>{
     if(!fc)return;
     const c=D.clients[id]||(D.clients[id]={meteo:'vert',fm:'',ri:'',kpis:[]});
-    if(fc.fm&&String(fc.fm).trim()){c.fm=fc.fm;n++;}
-    if(fc.ri&&String(fc.ri).trim()){c.ri=fc.ri;n++;}
-    if(fc.override){c.override=true;c.meteo=fc.meteo;n++;}
+    if(fc.fm&&String(fc.fm).trim()&&(!additive||empty(c.fm))){c.fm=fc.fm;n++;}
+    if(fc.ri&&String(fc.ri).trim()&&(!additive||empty(c.ri))){c.ri=fc.ri;n++;}
+    if(fc.override&&(!additive||!c.override)){c.override=true;c.meteo=fc.meteo;n++;}
     if(Array.isArray(fc.kpis)){
       if(!c.kpis)c.kpis=[];
       fc.kpis.forEach((k,i)=>{
-        if(k&&k.v&&k.v!=='%'&&k.v!=='-'&&k.v!=='N/A'){
-          if(c.kpis[i]){c.kpis[i].v=k.v;if(k.o)c.kpis[i].o=k.o;if(k.k)c.kpis[i].k=k.k;}
-          else c.kpis[i]={...k};
-          n++;
+        if(k&&!empty(k.v)){
+          if(c.kpis[i]){
+            if(!additive||empty(c.kpis[i].v)){c.kpis[i].v=k.v;if(k.o)c.kpis[i].o=k.o;if(k.k)c.kpis[i].k=k.k;n++;}
+          }
+          else{c.kpis[i]={...k};n++;}
         }
       });
     }
   });
   if(Array.isArray(f.mc))f.mc.forEach(fr=>{
     const m=(D.mc||[]).find(x=>x&&x.c===fr.c);
-    if(m&&fr.val&&fr.val!=='%'&&fr.val!=='-'){m.val=fr.val;n++;}
+    if(m&&!empty(fr.val)&&(!additive||empty(m.val))){m.val=fr.val;n++;}
   });
   if(f.q){
-    ['max','min','moy','rem'].forEach(k=>{if(f.q[k]){D.q[k]=f.q[k];n++;}});
+    ['max','min','moy','rem'].forEach(k=>{if(f.q[k]&&(!additive||empty(D.q[k]))){D.q[k]=f.q[k];n++;}});
     if(Array.isArray(f.q.rows)&&f.q.rows.length&&!(D.q.rows||[]).length){D.q.rows=f.q.rows;n++;}
   }
-  if(f.qos)['s11','s12','img'].forEach(k=>{if(f.qos[k]){D.qos[k]=f.qos[k];n++;}});
+  if(f.qos)['s11','s12','img'].forEach(k=>{if(f.qos[k]&&(!additive||empty(D.qos[k]))){D.qos[k]=f.qos[k];n++;}});
   if(Array.isArray(f.aban)&&f.aban.length&&!(D.aban||[]).length){D.aban=f.aban;n++;}
   if(Array.isArray(f.slaSnap)&&f.slaSnap.length&&!SLA.length){SLA=f.slaSnap;n++;}
   return n;

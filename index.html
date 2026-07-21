@@ -962,9 +962,9 @@ function hKeys(){const k=[];for(let i=0;i<_storage.length;i++){const x=_storage.
 const PROJ_KEY='dop_v5_global_projets';
 let PROJETS=[];
 
-const CCO_DEFAULT_PROJETS=[{"type": "titre", "label": "Lancements Clients + Evolution IA", "couleur": "#3D5661", "id": "cco_0_1778192276"}, {"type": "projet", "nom": "TERACT – 2ème phase et RUN", "desc": "Déploiement 2ème phase et mise en production", "couleur": "#3D5661", "debut": "2026-01", "fin": "2026-04", "progress": 70, "statut": "en cours", "jalons": [{"label": "RUN", "date": "2026-04-15"}], "id": "cco_1_1778192276"}, {"type": "projet", "nom": "MONEXT – Proxy", "desc": "", "couleur": "#3D5661", "debut": "2026-02", "fin": "2026-05", "progress": 40, "statut": "en cours", "jalons": [], "id": "cco_2_1778192276"}, {"type": "projet", "nom": "RFI – AlexSea / GENESYS CX2 / SeaClick / WhatSea", "desc": "Request For Information multi-outils", "couleur": "#3D5661", "debut": "2026-01", "fin": "2026-03", "progress": 100, "statut": "terminé", "jalons": [{"label": "RFI clôturée", "date": "2026-03-31"}], "id": "cco_3_1778192276"}, {"type": "projet", "nom": "RFP – CCO (BOT / AlexSea / Copilot)", "desc": "Request For Proposal", "couleur": "#3D5661", "debut": "2026-02", "fin": "2026-06", "progress": 30, "statut": "en cours", "jalons": [], "id": "cco_4_1778192276"}, {"type": "projet", "nom": "Salon All 4 Customers", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 80, "statut": "en cours", "jalons": [{"label": "Salon", "date": "2026-05-10"}], "id": "cco_5_1778192276"}, {"type": "titre", "label": "Qualité", "couleur": "#3D5661", "id": "cco_6_1778192276"}, {"type": "projet", "nom": "Formation GRC + Accompagnement Manager / Double écoute / Reporting", "desc": "Formation Gestion de la Relation Client, picking qualité", "couleur": "#3D5661", "debut": "2026-01", "fin": "2026-12", "progress": 35, "statut": "en cours", "jalons": [], "id": "cco_7_1778192276"}, {"type": "projet", "nom": "Prez Roadmap GENESYS", "desc": "Présentation de la roadmap GENESYS", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 80, "statut": "en cours", "jalons": [{"label": "Présentation", "date": "2026-05-15"}], "id": "cco_8_1778192276"}, {"type": "projet", "nom": "POC Connect Lingua OBS", "desc": "Proof of concept", "couleur": "#3D5661", "debut": "2026-03", "fin": "2026-06", "progress": 20, "statut": "en cours", "jalons": [], "id": "cco_9_1778192276"}, {"type": "projet", "nom": "Demo Eloquant", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 60, "statut": "en cours", "jalons": [{"label": "Demo", "date": "2026-05-01"}], "id": "cco_10_1778192276"}, {"type": "projet", "nom": "VACAPO – POC", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-07", "progress": 10, "statut": "en cours", "jalons": [], "id": "cco_11_1778192276"}, {"type": "titre", "label": "Automatisation + CAI", "couleur": "#3D5661", "id": "cco_12_1778192276"}, {"type": "projet", "nom": "AlexSea – POC INVIVO + PRIMAGAZ", "desc": "", "couleur": "#3D5661", "debut": "2026-03", "fin": "2026-08", "progress": 25, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-05-01"}, {"label": "En prod", "date": "2026-07-01"}, {"label": "REX", "date": "2026-08-01"}], "id": "cco_13_1778192276"}, {"type": "projet", "nom": "Automatisation des CCT", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-09", "progress": 15, "statut": "en cours", "jalons": [{"label": "EB", "date": "2026-05-01"}, {"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-08-01"}], "id": "cco_14_1778192276"}, {"type": "projet", "nom": "SeaClick", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-09", "progress": 20, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-08-01"}, {"label": "REX", "date": "2026-09-01"}], "id": "cco_15_1778192276"}, {"type": "projet", "nom": "WhatSea", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-08", "progress": 10, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-06-01"}], "id": "cco_16_1778192276"}, {"type": "projet", "nom": "Tchat BOT TERACT", "desc": "", "couleur": "#3D5661", "debut": "2026-05", "fin": "2026-09", "progress": 5, "statut": "à venir", "jalons": [], "id": "cco_17_1778192276"}, {"type": "titre", "label": "Tableau de bords et Reporting", "couleur": "#3D5661", "id": "cco_18_1778192276"}, {"type": "projet", "nom": "BI – Thelem / IDL / PONANT / SODIAAL / G2S / SOLINA", "desc": "Business Intelligence multi-clients", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-09", "progress": 20, "statut": "en cours", "jalons": [{"label": "EB", "date": "2026-05-01"}, {"label": "Recette", "date": "2026-07-01"}, {"label": "En prod", "date": "2026-09-01"}], "id": "cco_19_1778192276"}, {"type": "projet", "nom": "GRAFANA et Qlik – Multiclient", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-10", "progress": 30, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-09-01"}], "id": "cco_20_1778192276"}, {"type": "projet", "nom": "SLA DOP", "desc": "", "couleur": "#3D5661", "debut": "2026-06", "fin": "2026-12", "progress": 5, "statut": "à venir", "jalons": [{"label": "EB", "date": "2026-07-01"}, {"label": "Recette", "date": "2026-09-01"}, {"label": "En prod", "date": "2026-11-01"}], "id": "cco_21_1778192276"}];
+const CCO_DEFAULT_PROJETS=[{"type": "titre", "label": "Lancements Clients + Evolution IA", "couleur": "#3D5661", "id": "cco_1_1778192276"}, {"type": "projet", "nom": "Evolutions AlexSEA", "desc": "", "couleur": "#3D5661", "debut": "2026-03", "fin": "2026-12", "progress": 56, "statut": "en cours", "jalons": [], "id": "cco_2_1778192276"}, {"type": "projet", "nom": "AlexSea – POC INVIVO", "desc": "", "couleur": "#3D5661", "debut": "2026-03", "fin": "2026-08", "progress": 53, "statut": "bloqué", "jalons": [{"label": "Recette", "date": "2026-05-01"}, {"label": "En prod", "date": "2026-07-01"}, {"label": "REX", "date": "2026-08-01"}], "id": "cco_3_1778192276"}, {"type": "projet", "nom": "AlexSEA_POC PRIMAGAZ", "desc": "", "couleur": "#3D5661", "debut": "2026-06", "fin": "2026-10", "progress": 62, "statut": "en cours", "jalons": [], "id": "cco_4_1778192276"}, {"type": "projet", "nom": "AlexSEA_POC SOLINA", "desc": "", "couleur": "#3D5661", "debut": "2026-06", "fin": "2026-10", "progress": 5, "statut": "en cours", "jalons": [], "id": "cco_5_1778192276"}, {"type": "projet", "nom": "TERACT – 2ème phase et RUN", "desc": "Déploiement 2ème phase et mise en production", "couleur": "#3D5661", "debut": "2026-01", "fin": "2026-04", "progress": 100, "statut": "terminé", "jalons": [{"label": "RUN", "date": "2026-04-15"}], "id": "cco_6_1778192276"}, {"type": "projet", "nom": "MONEXT – Proxy", "desc": "", "couleur": "#3D5661", "debut": "2026-02", "fin": "2026-05", "progress": 100, "statut": "terminé", "jalons": [], "id": "cco_7_1778192276"}, {"type": "projet", "nom": "RFI – Solution CCO", "desc": "Request For Information multi-outils", "couleur": "#3D5661", "debut": "2026-07", "fin": "2026-09", "progress": 31, "statut": "en cours", "jalons": [{"label": "RFI clôturée", "date": "2026-09-25"}], "id": "cco_8_1778192276"}, {"type": "projet", "nom": "RFP – Solution CCO", "desc": "Request For Proposal", "couleur": "#3D5661", "debut": "2026-10", "fin": "2026-11", "progress": 0, "statut": "à venir", "jalons": [], "id": "cco_9_1778192276"}, {"type": "projet", "nom": "Salon All 4 Customers", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 100, "statut": "terminé", "jalons": [{"label": "Salon", "date": "2026-05-10"}], "id": "cco_10_1778192276"}, {"type": "titre", "label": "Qualité", "couleur": "#3D5661", "id": "cco_11_1778192276"}, {"type": "projet", "nom": "Formation GRC + Accompagnement Manager / Double écoute / Reporting", "desc": "Formation Gestion de la Relation Client, pilotage qualité", "couleur": "#3D5661", "debut": "2026-01", "fin": "2026-12", "progress": 73, "statut": "en cours", "jalons": [], "id": "cco_12_1778192276"}, {"type": "projet", "nom": "Prez Roadmap GENESYS", "desc": "Présentation de la roadmap GENESYS", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 100, "statut": "terminé", "jalons": [{"label": "Présentation", "date": "2026-05-15"}], "id": "cco_13_1778192276"}, {"type": "projet", "nom": "POC Connect Lingua OBS", "desc": "Proof of concept", "couleur": "#3D5661", "debut": "2026-03", "fin": "2026-06", "progress": 100, "statut": "terminé", "jalons": [], "id": "cco_14_1778192276"}, {"type": "projet", "nom": "Demo Eloquant", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-05", "progress": 100, "statut": "terminé", "jalons": [{"label": "Demo", "date": "2026-05-01"}], "id": "cco_15_1778192276"}, {"type": "projet", "nom": "VACAPO – POC", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-06", "progress": 100, "statut": "terminé", "jalons": [], "id": "cco_16_1778192276"}, {"type": "titre", "label": "Automatisation + CAI", "couleur": "#3D5661", "id": "cco_17_1778192276"}, {"type": "projet", "nom": "Automatisation des CCT", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-10", "progress": 15, "statut": "en cours", "jalons": [{"label": "EB", "date": "2026-05-01"}, {"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-10-01"}], "id": "cco_18_1778192276"}, {"type": "projet", "nom": "SeaClick V1", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-09", "progress": 87, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-08-01"}, {"label": "REX", "date": "2026-09-01"}], "id": "cco_19_1778192276"}, {"type": "projet", "nom": "Seaclik V2", "desc": "", "couleur": "#3D5661", "debut": "2026-09", "fin": "2026-11", "progress": 0, "statut": "à venir", "jalons": [], "id": "cco_20_1778192276"}, {"type": "projet", "nom": "WhatSea", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-08", "progress": 79, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-09-01"}], "id": "cco_21_1778192276"}, {"type": "projet", "nom": "Tchat BOT TERACT", "desc": "", "couleur": "#3D5661", "debut": "2026-05", "fin": "2026-06", "progress": 100, "statut": "terminé", "jalons": [], "id": "cco_22_1778192276"}, {"type": "projet", "nom": "BOT TERACT V2", "desc": "", "couleur": "#3D5661", "debut": "2026-07", "fin": "2026-10", "progress": 0, "statut": "à venir", "jalons": [], "id": "cco_23_1778192276"}, {"type": "projet", "nom": "Planning 2.0", "desc": "", "couleur": "#3D5661", "debut": "2026-07", "fin": "2026-12", "progress": 0, "statut": "à venir", "jalons": [], "id": "cco_24_1778192276"}, {"type": "titre", "label": "Tableau de bords et Reporting", "couleur": "#3D5661", "id": "cco_25_1778192276"}, {"type": "projet", "nom": "BI – Thelem / IDL / PONANT / SODIAAL / G2S / SOLINA", "desc": "Business Intelligence multi-clients", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-09", "progress": 20, "statut": "en cours", "jalons": [{"label": "EB", "date": "2026-05-01"}, {"label": "Recette", "date": "2026-07-01"}, {"label": "En prod", "date": "2026-09-01"}], "id": "cco_26_1778192276"}, {"type": "projet", "nom": "GRAFANA et Qlik – Multiclient", "desc": "", "couleur": "#3D5661", "debut": "2026-04", "fin": "2026-10", "progress": 30, "statut": "en cours", "jalons": [{"label": "Recette", "date": "2026-06-01"}, {"label": "En prod", "date": "2026-09-01"}], "id": "cco_27_1778192276"}, {"type": "projet", "nom": "SLA DOP", "desc": "", "couleur": "#3D5661", "debut": "2026-06", "fin": "2026-12", "progress": 5, "statut": "à venir", "jalons": [{"label": "EB", "date": "2026-07-01"}, {"label": "Recette", "date": "2026-09-01"}, {"label": "En prod", "date": "2026-11-01"}], "id": "cco_28_1778192276"}];
 
-const CCO_VERSION='cco_v2'; // incrémenter pour forcer le rechargement
+const CCO_VERSION='cco_v3'; // incrémenté pour forcer le rechargement des projets par défaut mis à jour (24 projets / 4 rubriques)
 
 function loadProjets(){
   try{
@@ -3793,13 +3793,27 @@ async function makePPT(){
       const zTop=axY+axH+0.08, zBot=5.12;
       const gap=0.08, padV=0.075;
       const totRows=flat.reduce((a,x)=>a+x.items.length,0);
+      const MIN_ROWH=0.125; /* hauteur mini d'une ligne — abaissée (était 0.155) pour afficher plus de projets avant de tronquer */
       let rowH=(zBot-zTop-(flat.length-1)*gap-flat.length*2*padV)/totRows;
       let skipped=0;
-      if(rowH<0.155){
-        rowH=0.155;
+      if(rowH<MIN_ROWH){
+        rowH=MIN_ROWH;
         const cap=Math.floor((zBot-zTop-(flat.length-1)*gap-flat.length*2*padV)/rowH);
-        let left=cap;
-        flat.forEach(x=>{const keep=Math.max(1,Math.min(x.items.length,Math.floor(cap*x.items.length/totRows)));skipped+=x.items.length-keep;x.items=x.items.slice(0,keep);left-=keep;});
+        /* 1) allocation proportionnelle initiale (au moins 1 ligne par rubrique) */
+        const keepCounts=flat.map(x=>Math.max(1,Math.min(x.items.length,Math.floor(cap*x.items.length/totRows))));
+        /* 2) l'arrondi par défaut (Math.floor) laissait de la capacité inutilisée et tronquait des projets
+              alors qu'il restait de la place : on redistribue le reliquat, rubrique par rubrique, tant qu'il
+              reste de la capacité ET des projets cachés — c'est ce qui coupait 9 sujets à 5 par exemple. */
+        let used=keepCounts.reduce((a,b)=>a+b,0);
+        let left=cap-used;
+        while(left>0){
+          let progressed=false;
+          for(let gi2=0;gi2<flat.length&&left>0;gi2++){
+            if(keepCounts[gi2]<flat[gi2].items.length){keepCounts[gi2]++;left--;progressed=true;}
+          }
+          if(!progressed) break;
+        }
+        flat.forEach((x,gi2)=>{skipped+=x.items.length-keepCounts[gi2];x.items=x.items.slice(0,keepCounts[gi2]);});
       }
       rowH=Math.min(rowH,0.34);
       const laneCols=[NV,'51606B'];
@@ -3963,6 +3977,53 @@ async function makePPT(){
         sl.addText(t2||'À compléter chaque semaine',{x:0.44,y:1.30,w:4.29,h:3.60,fontSize:8.5,color:t2?NV2:'9AA3AF',italic:!t2,valign:'top',fontFace:F,margin:0});
       }
       alertsFM(sl,csz.ri,csz.fm);
+      footer(sl);
+    });
+
+    /* ══ SLIDE : Outils & Configuration (Gestion clients / Genesys Cloud / Qlik Cloud) — 1 slide pour les 3 afin de limiter le nb de slides ══ */
+    safeSlide(()=>{
+      const sl=pptx.addSlide();
+      header(sl,'gestion','CFG',null,'Outils & Configuration');
+      const cols=[
+        {id:'gestion',lbl:'Gestion clients',conn:null},
+        {id:'genesys',lbl:'Genesys Cloud',  conn:(typeof D.gcx!=='undefined'?D.gcx?.connected:null)},
+        {id:'qlik',   lbl:'Qlik Cloud',     conn:(typeof D.qlk!=='undefined'?D.qlk?.connected:null)},
+      ];
+      const gap=0.18, x0=0.30, cw=(9.40-2*gap)/3, y0=1.16, ch=3.90;
+      cols.forEach((c,i)=>{
+        const x=x0+i*(cw+gap);
+        const cs=D.clients[c.id]||{};
+        sl.addShape('roundRect',{x,y:y0,w:cw,h:ch,rectRadius:0.05,fill:{color:'FFFFFF'},line:{color:BRD,width:0.75},shadow:shd()});
+        sl.addShape('rect',{x,y:y0,w:cw,h:0.34,fill:{color:NV},line:{color:NV,width:0}});
+        sl.addText(c.lbl,{x:x+0.10,y:y0,w:cw-0.85,h:0.34,fontSize:9,bold:true,color:'FFFFFF',valign:'middle',fontFace:F,margin:0});
+        if(c.conn!==null&&c.conn!==undefined){
+          const ok=!!c.conn;
+          sl.addShape('roundRect',{x:x+cw-0.72,y:y0+0.06,w:0.62,h:0.22,rectRadius:0.05,fill:{color:ok?OKG:RED},line:{color:ok?OKG:RED,width:0}});
+          sl.addText(ok?'Connecté':'Déconnecté',{x:x+cw-0.72,y:y0+0.06,w:0.62,h:0.22,fontSize:6,bold:true,color:'FFFFFF',align:'center',valign:'middle',fontFace:F,margin:0});
+        }
+        /* Indicateurs (jusqu'à 4, format compact) */
+        const kpis=(cs.kpis||[]).filter(k=>k.v&&k.v!=='%');
+        sl.addText('Indicateurs',{x:x+0.12,y:y0+0.44,w:cw-0.24,h:0.20,fontSize:7.5,bold:true,color:NV,fontFace:F,margin:0});
+        if(kpis.length){
+          const kRuns=[];
+          kpis.slice(0,4).forEach(k=>{
+            kRuns.push({text:k.k+' : ',options:{color:NV2,fontSize:7.5,bold:true,breakLine:false}});
+            kRuns.push({text:String(k.v),options:{color:GRY,fontSize:7.5,breakLine:true}});
+          });
+          sl.addText(kRuns,{x:x+0.12,y:y0+0.66,w:cw-0.24,h:0.62,valign:'top',fontFace:F,paraSpaceAfter:2,margin:0});
+        } else {
+          sl.addText('Aucun indicateur',{x:x+0.12,y:y0+0.66,w:cw-0.24,h:0.30,fontSize:7.5,italic:true,color:'9AA3AF',fontFace:F,margin:0});
+        }
+        /* Sujets et Projets = fusion Alertes/Risques (ri) + Faits Marquants (fm) du client, même logique que la slide QoS */
+        sl.addText('Sujets et Projets',{x:x+0.12,y:y0+1.36,w:cw-0.24,h:0.20,fontSize:7.5,bold:true,color:NV,fontFace:F,margin:0});
+        const lines=[...String(cs.ri||'').split('\n'),...String(cs.fm||'').split('\n')].map(t=>t.trim()).filter(Boolean);
+        const pRuns=[];
+        (lines.length?lines:['À compléter chaque semaine']).forEach(t=>{
+          pRuns.push({text:'•  ',options:{color:BLU,fontSize:7.5,bold:true}});
+          pRuns.push({text:t,options:{color:lines.length?NV2:'9AA3AF',italic:!lines.length,fontSize:7.5,breakLine:true}});
+        });
+        sl.addText(pRuns,{x:x+0.12,y:y0+1.58,w:cw-0.24,h:ch-1.70,valign:'top',fontFace:F,paraSpaceAfter:3,margin:0});
+      });
       footer(sl);
     });
 
